@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Civil Engineering 10-Day Attendance Log</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --border: #cbd5e1;
+      --present: #16a34a;
+      --absent: #dc2626;
+      --late: #d97706;
+      --unmarked: #64748b;
+    }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 1.5rem 1rem;
+      margin: 0;
+    }
+    .container {
+      max-width: 98%;
+      margin: 0 auto;
+      background: var(--card);
+      padding: 1.25rem;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .legend {
+      display: flex;
+      gap: 0.75rem;
+      font-size: 0.85rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .legend span {
+      display: inline-block;
+      width: 22px;
+      height: 22px;
+      line-height: 22px;
+      text-align: center;
+      border-radius: 4px;
+      font-weight: 700;
+      color: white;
+    }
+    .badge-empty { background: #e2e8f0; color: #475569 !important; }
+    .badge-p { background: var(--present); }
+    .badge-a { background: var(--absent); }
+    .badge-l { background: var(--late); }
+
+    .table-wrapper {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+    th, td {
+      padding: 0.45rem 0.5rem;
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid #e2e8f0;
+    }
+    th {
+      background: #f1f5f9;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+    }
+    .sticky-col {
+      position: sticky;
+      left: 0;
+      background: white;
+      z-index: 2;
+    }
+    th.sticky-col {
+      background: #f1f5f9;
+      z-index: 3;
+    }
+    
+    .status-select {
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.25rem 0.15rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      text-align: center;
+      outline: none;
+      width: 48px;
+    }
+    .status-select.sel-empty { background: #f1f5f9; color: var(--unmarked); border-color: #cbd5e1; }
+    .status-select.sel-P { background: #dcfce7; color: var(--present); border-color: #86efac; }
+    .status-select.sel-A { background: #fee2e2; color: var(--absent); border-color: #fca5a5; }
+    .status-select.sel-L { background: #fef3c7; color: var(--late); border-color: #fde68a; }
+
+    .reset-btn {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    .reset-btn:hover { background: #dc2626; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h2 style="margin: 0; font-size: 1.25rem;">10-Day Attendance Tracker</h2>
+      <div class="legend">
+        <strong>Options:</strong>
+        <div><span class="badge-empty">-</span> Unmarked</div>
+        <div><span class="badge-p">P</span> Present</div>
+        <div><span class="badge-a">A</span> Absent</div>
+        <div><span class="badge-l">L</span> Late</div>
+        <button class="reset-btn" onclick="resetAll()">Clear Sheet</button>
+      </div>
+    </header>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th class="sticky-col">Sl.</th>
+            <th>USN</th>
+            <th>Name</th>
+            <th>Team</th>
+            <th style="text-align:center;">D1</th>
+            <th style="text-align:center;">D2</th>
+            <th style="text-align:center;">D3</th>
+            <th style="text-align:center;">D4</th>
+            <th style="text-align:center;">D5</th>
+            <th style="text-align:center;">D6</th>
+            <th style="text-align:center;">D7</th>
+            <th style="text-align:center;">D8</th>
+            <th style="text-align:center;">D9</th>
+            <th style="text-align:center;">D10</th>
+            <th style="text-align:center;">Att. %</th>
+          </tr>
+        </thead>
+        <tbody id="roster-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const studentList = [
+      { id: 1, usn: "2GO24CV001", name: "ABHINAYA", team: "Team A" },
+      { id: 2, usn: "2GO24CV003", name: "AISHWARYA KATHARE N", team: "Team D" },
+      { id: 3, usn: "2GO24CV004", name: "ALFIYABANU KAMBALI", team: "Team D" },
+      { id: 4, usn: "2GO24CV005", name: "ARUNA", team: "Team C" },
+      { id: 5, usn: "2GO24CV009", name: "CHETHANA. K.H", team: "Team D" },
+      { id: 6, usn: "2GO24CV010", name: "DAYANAND", team: "Team A" },
+      { id: 7, usn: "2GO24CV011", name: "HARSHA", team: "Team B" },
+      { id: 8, usn: "2GO24CV012", name: "IMAMHUSEN R G", team: "Team C" },
+      { id: 9, usn: "2GO24CV013", name: "KAVITHA", team: "Team C" },
+      { id: 10, usn: "2GO24CV014", name: "KAVYA B", team: "Team B" },
+      { id: 11, usn: "2GO24CV015", name: "KAVYA ICHCHANGI", team: "Team A" },
+      { id: 12, usn: "2GO24CV016", name: "KIRAN. M. MOTEBENNURU", team: "Team D" },
+      { id: 13, usn: "2GO24CV017", name: "LAXMAVVA", team: "Team C" },
+      { id: 14, usn: "2GO24CV018", name: "LAXMEE Y H", team: "Team B" },
+      { id: 15, usn: "2GO24CV019", name: "MADHUMATHI", team: "Team C" },
+      { id: 16, usn: "2GO24CV020", name: "MADHUSUDAN", team: "Team A" },
+      { id: 17, usn: "2GO24CV021", name: "NAVEEN. T.Υ.", team: "Team D" },
+      { id: 18, usn: "2GO24CV022", name: "NIKITA", team: "Team A" },
+      { id: 19, usn: "2GO24CV023", name: "NIVEDITA", team: "Team A" },
+      { id: 20, usn: "2GO24CV024", name: "P NIKIL", team: "Team B" },
+      { id: 21, usn: "2GO24CV025", name: "PRAVEENKUMAR BOGER", team: "Team B" },
+      { id: 22, usn: "2GO24CV026", name: "PRIYANKAY H", team: "Team B" },
+      { id: 23, usn: "2GO24CV027", name: "ROOPA D", team: "Team A" },
+      { id: 24, usn: "2GO24CV030", name: "SANGEETA Κ", team: "Team B" },
+      { id: 25, usn: "2GO24CV031", name: "SANIYA KARJAGI", team: "Team D" },
+      { id: 26, usn: "2GO24CV032", name: "SHALINI SP", team: "Team C" },
+      { id: 27, usn: "2GO24CV033", name: "SHALINI UT", team: "Team A" },
+      { id: 28, usn: "2GO24CV036", name: "SHRUTI GANIGAR", team: "Team B" },
+      { id: 29, usn: "2GO24CV037", name: "SIDDANAGOUDA", team: "Team C" },
+      { id: 30, usn: "2GO24CV038", name: "SINDHU", team: "Team C" },
+      { id: 31, usn: "2GO24CV039", name: "SNEHA", team: "Team A" },
+      { id: 32, usn: "2GO24CV040", name: "SRUSTI ITTEKAR", team: "Team D" },
+      { id: 33, usn: "2GO24CV041", name: "SUDHA S H", team: "Team B" },
+      { id: 34, usn: "2GO24CV043", name: "YASHWANTH. P. K", team: "Team D" },
+      { id: 35, usn: "2GO25CV400", name: "AKASH K N", team: "Team C" },
+      { id: 36, usn: "2GO25CV401", name: "AMRUTHA N", team: "Team C" },
+      { id: 37, usn: "2GO25CV402", name: "BHARAT S", team: "Team B" },
+      { id: 38, usn: "2GO25CV404", name: "CHANDRAKANTH D C", team: "Team C" },
+      { id: 39, usn: "2GO25CV405", name: "DHANUSHREE", team: "Team C" },
+      { id: 40, usn: "2GO25CV406", name: "KAVYA MA", team: "Team A" },
+      { id: 41, usn: "2GO25CV407", name: "KAVYA S K", team: "Team B" },
+      { id: 42, usn: "2GO25CV408", name: "KEERTHI. B. T", team: "Team D" },
+      { id: 43, usn: "2GO25CV409", name: "KUMAR K", team: "Team D" },
+      { id: 44, usn: "2GO25CV410", name: "NIGARAJ BM", team: "Team B" },
+      { id: 45, usn: "2GO25CV411", name: "NUTANSAGAR", team: "Team A" },
+      { id: 46, usn: "2GO25CV412", name: "PRAVEENKUMAR U D", team: "Team A" },
+      { id: 47, usn: "2GO25CV413", name: "PRIYANKA P", team: "Team A" },
+      { id: 48, usn: "2GO25CV414", name: "PRUTHVI PG", team: "Team B" },
+      { id: 49, usn: "2GO25CV416", name: "RAKSHITHA", team: "Team C" },
+      { id: 50, usn: "2GO25CV417", name: "RAMESH. S. H", team: "Team D" },
+      { id: 51, usn: "2GO25CV418", name: "SAMPATTA", team: "Team A" },
+      { id: 52, usn: "2GO25CV419", name: "SANNAOBANAYAKA", team: "Team A" },
+      { id: 53, usn: "2GO25CV420", name: "SIDDESH NS", team: "Team C" },
+      { id: 54, usn: "2GO25CV421", name: "SNEHA D", team: "Team A" },
+      { id: 55, usn: "2GO25CV422", name: "SRUJAN K S", team: "Team C" },
+      { id: 56, usn: "2GO25CV423", name: "SUHAS. R. M", team: "Team D" },
+      { id: 57, usn: "2GO25CV424", name: "UDITH KUMAR. G. M", team: "Team D" },
+      { id: 58, usn: "2GO25CV425", name: "VARSHA", team: "Team C" },
+      { id: 59, usn: "2GO25CV426", name: "VIKAS LP", team: "Team B" },
+      { id: 60, usn: "2GO25CV427", name: "YASHODA", team: "Team D" }
+    ];
+
+    function createEmptyState() {
+      return studentList.map(student => ({
+        ...student,
+        days: Array(10).fill("")
+      }));
+    }
+
+    let records = JSON.parse(localStorage.getItem('civil_10day_attendance_v2')) || createEmptyState();
+
+    function renderTable() {
+      localStorage.setItem('civil_10day_attendance_v2', JSON.stringify(records));
+      const tbody = document.getElementById('roster-body');
+      tbody.innerHTML = '';
+
+      records.forEach((s, sIdx) => {
+        const tr = document.createElement('tr');
+        
+        let present = s.days.filter(d => d === 'P').length;
+        let late = s.days.filter(d => d === 'L').length;
+        let marked = s.days.filter(d => d !== '').length;
+        
+        let percentageDisplay = marked === 0 ? '-' : Math.round(((present + (late * 0.5)) / marked) * 100) + '%';
+
+        let dayDropdowns = s.days.map((val, dIdx) => `
+          <td style="text-align:center; padding: 2px;">
+            <select class="status-select sel-${val || 'empty'}" onchange="updateDay(${sIdx}, ${dIdx}, this.value)">
+              <option value="" ${val === '' ? 'selected' : ''}>-</option>
+              <option value="P" ${val === 'P' ? 'selected' : ''}>P</option>
+              <option value="A" ${val === 'A' ? 'selected' : ''}>A</option>
+              <option value="L" ${val === 'L' ? 'selected' : ''}>L</option>
+            </select>
+          </td>
+        `).join('');
+
+        tr.innerHTML = `
+          <td class="sticky-col">${sIdx + 1}</td>
+          <td><code>${s.usn}</code></td>
+          <td><strong>${s.name}</strong></td>
+          <td>${s.team}</td>
+          ${dayDropdowns}
+          <td style="text-align:center; font-weight:700;">${percentageDisplay}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function updateDay(sIdx, dIdx, value) {
+      records[sIdx].days[dIdx] = value;
+      renderTable();
+    }
+
+    function resetAll() {
+      records = createEmptyState();
+      renderTable();
+    }
+
+    renderTable();
+  </script>
+</body>
+</html>
+
