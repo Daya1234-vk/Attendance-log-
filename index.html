@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Civil Engineering 10-Day Attendance Log</title>
+  <title>Civil Engineering Attendance Cloud Tracker</title>
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
   <style>
     :root {
       --bg: #f8fafc;
@@ -37,6 +42,11 @@
       margin-bottom: 1rem;
       flex-wrap: wrap;
       gap: 1rem;
+    }
+    .sync-status {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #0284c7;
     }
     .legend {
       display: flex;
@@ -93,7 +103,6 @@
       background: #f1f5f9;
       z-index: 3;
     }
-    
     .status-select {
       font-size: 0.8rem;
       font-weight: 700;
@@ -118,15 +127,16 @@
       border-radius: 4px;
       cursor: pointer;
       font-size: 0.8rem;
-      font-weight: 500;
     }
-    .reset-btn:hover { background: #dc2626; }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h2 style="margin: 0; font-size: 1.25rem;">10-Day Attendance Tracker</h2>
+      <div>
+        <h2 style="margin: 0; font-size: 1.25rem;">10-Day Attendance (Cloud-Synced)</h2>
+        <span class="sync-status" id="sync-status">Connecting to live database...</span>
+      </div>
       <div class="legend">
         <strong>Options:</strong>
         <div><span class="badge-empty">-</span> Unmarked</div>
@@ -164,6 +174,21 @@
   </div>
 
   <script>
+    // Configuration automatically filled from your project
+    const firebaseConfig = {
+      apiKey: "AIzaSyCd29X3MoHJEnz37dPLCHViSdiee3DAZHc",
+      authDomain: "attendance-app-61b68.firebaseapp.com",
+      databaseURL: "https://attendance-app-61b68-default-rtdb.firebaseio.com",
+      projectId: "attendance-app-61b68",
+      storageBucket: "attendance-app-61b68.firebasestorage.app",
+      messagingSenderId: "969455602479",
+      appId: "1:969455602479:web:21e7180ab7a9699f9c212a"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const attendanceRef = db.ref('attendance_records');
+
     const studentList = [
       { id: 1, usn: "2GO24CV001", name: "ABHINAYA", team: "Team A" },
       { id: 2, usn: "2GO24CV003", name: "AISHWARYA KATHARE N", team: "Team D" },
@@ -227,30 +252,21 @@
       { id: 60, usn: "2GO25CV427", name: "YASHODA", team: "Team D" }
     ];
 
-    function createEmptyState() {
-      return studentList.map(student => ({
-        ...student,
-        days: Array(10).fill("")
-      }));
-    }
-
-    let records = JSON.parse(localStorage.getItem('civil_10day_attendance_v2')) || createEmptyState();
+    let records = [];
 
     function renderTable() {
-      localStorage.setItem('civil_10day_attendance_v2', JSON.stringify(records));
       const tbody = document.getElementById('roster-body');
       tbody.innerHTML = '';
 
       records.forEach((s, sIdx) => {
         const tr = document.createElement('tr');
         
-        let present = s.days.filter(d => d === 'P').length;
-        let late = s.days.filter(d => d === 'L').length;
-        let marked = s.days.filter(d => d !== '').length;
-        
+        let present = s.days ? s.days.filter(d => d === 'P').length : 0;
+        let late = s.days ? s.days.filter(d => d === 'L').length : 0;
+        let marked = s.days ? s.days.filter(d => d !== '').length : 0;
         let percentageDisplay = marked === 0 ? '-' : Math.round(((present + (late * 0.5)) / marked) * 100) + '%';
 
-        let dayDropdowns = s.days.map((val, dIdx) => `
+        let dayDropdowns = (s.days || Array(10).fill("")).map((val, dIdx) => `
           <td style="text-align:center; padding: 2px;">
             <select class="status-select sel-${val || 'empty'}" onchange="updateDay(${sIdx}, ${dIdx}, this.value)">
               <option value="" ${val === '' ? 'selected' : ''}>-</option>
@@ -273,18 +289,32 @@
       });
     }
 
-    function updateDay(sIdx, dIdx, value) {
-      records[sIdx].days[dIdx] = value;
+    // Sync in real-time across all users and tabs
+    attendanceRef.on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        records = data;
+      } else {
+        records = studentList.map(s => ({ ...s, days: Array(10).fill("") }));
+        attendanceRef.set(records);
+      }
+      document.getElementById('sync-status').textContent = "● Live synced to cloud";
+      document.getElementById('sync-status').style.color = "#16a34a";
       renderTable();
+    });
+
+    function updateDay(sIdx, dIdx, value) {
+      if (!records[sIdx].days) records[sIdx].days = Array(10).fill("");
+      records[sIdx].days[dIdx] = value;
+      attendanceRef.child(`${sIdx}/days/${dIdx}`).set(value);
     }
 
     function resetAll() {
-      records = createEmptyState();
-      renderTable();
+      if (confirm("Are you sure you want to clear attendance for all students?")) {
+        records = studentList.map(s => ({ ...s, days: Array(10).fill("") }));
+        attendanceRef.set(records);
+      }
     }
-
-    renderTable();
   </script>
 </body>
 </html>
-
