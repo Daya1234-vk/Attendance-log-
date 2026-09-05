@@ -48,6 +48,12 @@
       font-weight: 600;
       color: #0284c7;
     }
+    .actions-bar {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
     .legend {
       display: flex;
       gap: 0.75rem;
@@ -69,6 +75,28 @@
     .badge-p { background: var(--present); }
     .badge-a { background: var(--absent); }
     .badge-l { background: var(--late); }
+
+    .btn {
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .print-btn {
+      background: #2563eb;
+      color: white;
+    }
+    .print-btn:hover { background: #1d4ed8; }
+    .reset-btn {
+      background: #ef4444;
+      color: white;
+    }
+    .reset-btn:hover { background: #dc2626; }
 
     .table-wrapper {
       overflow-x: auto;
@@ -119,14 +147,53 @@
     .status-select.sel-A { background: #fee2e2; color: var(--absent); border-color: #fca5a5; }
     .status-select.sel-L { background: #fef3c7; color: var(--late); border-color: #fde68a; }
 
-    .reset-btn {
-      background: #ef4444;
-      color: white;
-      border: none;
-      padding: 0.4rem 0.8rem;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.8rem;
+    .print-val { display: none; }
+
+    /* Print & PDF Layout Styling */
+    @media print {
+      body {
+        background: white !important;
+        padding: 0 !important;
+        color: black !important;
+      }
+      .container {
+        max-width: 100% !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+      }
+      .actions-bar, .sync-status, .legend {
+        display: none !important;
+      }
+      .table-wrapper {
+        border: none !important;
+        overflow: visible !important;
+      }
+      table {
+        font-size: 8pt !important;
+        border-collapse: collapse !important;
+        width: 100% !important;
+      }
+      th, td {
+        padding: 3px 4px !important;
+        border: 1px solid #94a3b8 !important;
+      }
+      th {
+        background: #f1f5f9 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .status-select {
+        display: none !important;
+      }
+      .print-val {
+        display: inline-block !important;
+        font-weight: bold;
+        text-align: center;
+        width: 100%;
+      }
+      .sticky-col {
+        position: static !important;
+      }
     }
   </style>
 </head>
@@ -134,16 +201,18 @@
   <div class="container">
     <header>
       <div>
-        <h2 style="margin: 0; font-size: 1.25rem;">10-Day Attendance (Cloud-Synced)</h2>
+        <h2 style="margin: 0; font-size: 1.25rem;">Civil Engineering - 10-Day Attendance</h2>
         <span class="sync-status" id="sync-status">Connecting to live database...</span>
       </div>
-      <div class="legend">
-        <strong>Options:</strong>
-        <div><span class="badge-empty">-</span> Unmarked</div>
-        <div><span class="badge-p">P</span> Present</div>
-        <div><span class="badge-a">A</span> Absent</div>
-        <div><span class="badge-l">L</span> Late</div>
-        <button class="reset-btn" onclick="resetAll()">Clear Sheet</button>
+      <div class="actions-bar">
+        <div class="legend">
+          <div><span class="badge-empty">-</span> Unmarked</div>
+          <div><span class="badge-p">P</span> Present</div>
+          <div><span class="badge-a">A</span> Absent</div>
+          <div><span class="badge-l">L</span> Late</div>
+        </div>
+        <button class="btn print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>
+        <button class="btn reset-btn" onclick="resetAll()">Clear Sheet</button>
       </div>
     </header>
 
@@ -174,7 +243,6 @@
   </div>
 
   <script>
-    // Configuration automatically filled from your project
     const firebaseConfig = {
       apiKey: "AIzaSyCd29X3MoHJEnz37dPLCHViSdiee3DAZHc",
       authDomain: "attendance-app-61b68.firebaseapp.com",
@@ -274,6 +342,7 @@
               <option value="A" ${val === 'A' ? 'selected' : ''}>A</option>
               <option value="L" ${val === 'L' ? 'selected' : ''}>L</option>
             </select>
+            <span class="print-val">${val || '-'}</span>
           </td>
         `).join('');
 
@@ -289,7 +358,7 @@
       });
     }
 
-    // Sync in real-time across all users and tabs
+    // Preserves and pulls existing cloud data
     attendanceRef.on('value', (snapshot) => {
       const data = snapshot.val();
       if (data) {
