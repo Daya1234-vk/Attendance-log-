@@ -161,21 +161,40 @@
         box-shadow: none !important;
         padding: 0 !important;
       }
-      .actions-bar, .sync-status, .legend {
+      header {
+        margin-bottom: 0.75rem !important;
+      }
+      .actions-bar .btn, .sync-status {
         display: none !important;
+      }
+      .actions-bar {
+        margin-top: 0.25rem !important;
+      }
+      .legend {
+        display: flex !important;
+        font-size: 8pt !important;
+        gap: 0.5rem !important;
+      }
+      .legend span {
+        width: 16px !important;
+        height: 16px !important;
+        line-height: 16px !important;
+        font-size: 7.5pt !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
       .table-wrapper {
         border: none !important;
         overflow: visible !important;
       }
       table {
-        font-size: 8pt !important;
+        font-size: 7.5pt !important;
         border-collapse: collapse !important;
         width: 100% !important;
       }
       th, td {
-        padding: 3px 4px !important;
-        border: 1px solid #94a3b8 !important;
+        padding: 2px 3px !important;
+        border: 1px solid #64748b !important;
       }
       th {
         background: #f1f5f9 !important;
@@ -206,7 +225,7 @@
       </div>
       <div class="actions-bar">
         <div class="legend">
-          <div><span class="badge-empty">-</span> Exam attendees</div>
+          <div><span class="badge-empty">-</span> Exam Attendees</div>
           <div><span class="badge-p">P</span> Present</div>
           <div><span class="badge-a">A</span> Absent</div>
           <div><span class="badge-l">L</span> Late</div>
@@ -357,7 +376,6 @@
       });
     }
 
-    // Preserves and pulls existing cloud data
     attendanceRef.on('value', (snapshot) => {
       const data = snapshot.val();
       if (data) {
