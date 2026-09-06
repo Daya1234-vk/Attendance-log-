@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Civil Engineering Attendance Cloud Tracker</title>
+  <title>Extensive Survey Attendance Cloud Tracker</title>
   
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -17,7 +17,7 @@
       --border: #cbd5e1;
       --present: #16a34a;
       --absent: #dc2626;
-      --late: #d97706;
+      --excused: #2563eb;
       --unmarked: #64748b;
     }
     body {
@@ -74,7 +74,7 @@
     .badge-empty { background: #e2e8f0; color: #475569 !important; }
     .badge-p { background: var(--present); }
     .badge-a { background: var(--absent); }
-    .badge-l { background: var(--late); }
+    .badge-e { background: var(--excused); }
 
     .btn {
       padding: 0.4rem 0.8rem;
@@ -88,15 +88,10 @@
       gap: 0.3rem;
     }
     .print-btn {
-      background: #2563eb;
+      background: #0f172a;
       color: white;
     }
-    .print-btn:hover { background: #1d4ed8; }
-    .reset-btn {
-      background: #ef4444;
-      color: white;
-    }
-    .reset-btn:hover { background: #dc2626; }
+    .print-btn:hover { background: #334155; }
 
     .table-wrapper {
       overflow-x: auto;
@@ -145,7 +140,7 @@
     .status-select.sel-empty { background: #f1f5f9; color: var(--unmarked); border-color: #cbd5e1; }
     .status-select.sel-P { background: #dcfce7; color: var(--present); border-color: #86efac; }
     .status-select.sel-A { background: #fee2e2; color: var(--absent); border-color: #fca5a5; }
-    .status-select.sel-L { background: #fef3c7; color: var(--late); border-color: #fde68a; }
+    .status-select.sel-E { background: #dbeafe; color: var(--excused); border-color: #93c5fd; }
 
     .print-val { display: none; }
 
@@ -220,15 +215,15 @@
   <div class="container">
     <header>
       <div>
-        <h2 style="margin: 0; font-size: 1.25rem;">Civil Engineering - Extensive Survey Attendance</h2>
+        <h2 style="margin: 0; font-size: 1.25rem;">Extensive Survey Attendance</h2>
         <span class="sync-status" id="sync-status">Connecting to live database...</span>
       </div>
       <div class="actions-bar">
         <div class="legend">
-          <div><span class="badge-empty">-</span> Exam Attendees</div>
+          <div><span class="badge-empty">-</span> Exam Attendee</div>
           <div><span class="badge-p">P</span> Present</div>
           <div><span class="badge-a">A</span> Absent</div>
-          <div><span class="badge-e">E</span> Excused/Work Completed</div>
+          <div><span class="badge-e">E</span> Completed / Excused</div>
         </div>
         <button class="btn print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>
       </div>
@@ -348,9 +343,9 @@
         const tr = document.createElement('tr');
         
         let present = s.days ? s.days.filter(d => d === 'P').length : 0;
-        let late = s.days ? s.days.filter(d => d === 'L').length : 0;
-        let marked = s.days ? s.days.filter(d => d !== '').length : 0;
-        let percentageDisplay = marked === 0 ? '-' : Math.round(((present + (late * 0.5)) / marked) * 100) + '%';
+        let excused = s.days ? s.days.filter(d => d === 'E').length : 0;
+        let marked = s.days ? s.days.filter(d => d === 'P' || d === 'A' || d === 'E').length : 0;
+        let percentageDisplay = marked === 0 ? '-' : Math.round(((present + excused) / marked) * 100) + '%';
 
         let dayDropdowns = (s.days || Array(10).fill("")).map((val, dIdx) => `
           <td style="text-align:center; padding: 2px;">
@@ -358,7 +353,7 @@
               <option value="" ${val === '' ? 'selected' : ''}>-</option>
               <option value="P" ${val === 'P' ? 'selected' : ''}>P</option>
               <option value="A" ${val === 'A' ? 'selected' : ''}>A</option>
-              <option value="L" ${val === 'L' ? 'selected' : ''}>L</option>
+              <option value="E" ${val === 'E' ? 'selected' : ''}>E</option>
             </select>
             <span class="print-val">${val || '-'}</span>
           </td>
@@ -393,13 +388,6 @@
       if (!records[sIdx].days) records[sIdx].days = Array(10).fill("");
       records[sIdx].days[dIdx] = value;
       attendanceRef.child(`${sIdx}/days/${dIdx}`).set(value);
-    }
-
-    function resetAll() {
-      if (confirm("Are you sure you want to clear attendance for all students?")) {
-        records = studentList.map(s => ({ ...s, days: Array(10).fill("") }));
-        attendanceRef.set(records);
-      }
     }
   </script>
 </body>
