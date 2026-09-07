@@ -183,12 +183,12 @@
         overflow: visible !important;
       }
       table {
-        font-size: 7.5pt !important;
+        font-size: 8pt !important;
         border-collapse: collapse !important;
         width: 100% !important;
       }
       th, td {
-        padding: 2px 3px !important;
+        padding: 3px 5px !important;
         border: 1px solid #64748b !important;
       }
       th {
@@ -245,8 +245,6 @@
             <th style="text-align:center;">D6</th>
             <th style="text-align:center;">D7</th>
             <th style="text-align:center;">D8</th>
-            <th style="text-align:center;">D9</th>
-            <th style="text-align:center;">D10</th>
             <th style="text-align:center;">Att. %</th>
           </tr>
         </thead>
@@ -342,12 +340,15 @@
       records.forEach((s, sIdx) => {
         const tr = document.createElement('tr');
         
-        let present = s.days ? s.days.filter(d => d === 'P').length : 0;
-        let excused = s.days ? s.days.filter(d => d === 'E').length : 0;
-        let marked = s.days ? s.days.filter(d => d === 'P' || d === 'A' || d === 'E').length : 0;
+        // Truncate to first 8 days
+        const eightDays = (s.days || Array(8).fill("")).slice(0, 8);
+        
+        let present = eightDays.filter(d => d === 'P').length;
+        let excused = eightDays.filter(d => d === 'E').length;
+        let marked = eightDays.filter(d => d === 'P' || d === 'A' || d === 'E').length;
         let percentageDisplay = marked === 0 ? '-' : Math.round(((present + excused) / marked) * 100) + '%';
 
-        let dayDropdowns = (s.days || Array(10).fill("")).map((val, dIdx) => `
+        let dayDropdowns = eightDays.map((val, dIdx) => `
           <td style="text-align:center; padding: 2px;">
             <select class="status-select sel-${val || 'empty'}" onchange="updateDay(${sIdx}, ${dIdx}, this.value)">
               <option value="" ${val === '' ? 'selected' : ''}>-</option>
@@ -376,7 +377,7 @@
       if (data) {
         records = data;
       } else {
-        records = studentList.map(s => ({ ...s, days: Array(10).fill("") }));
+        records = studentList.map(s => ({ ...s, days: Array(8).fill("") }));
         attendanceRef.set(records);
       }
       document.getElementById('sync-status').textContent = "● Live synced to cloud";
@@ -385,7 +386,7 @@
     });
 
     function updateDay(sIdx, dIdx, value) {
-      if (!records[sIdx].days) records[sIdx].days = Array(10).fill("");
+      if (!records[sIdx].days) records[sIdx].days = Array(8).fill("");
       records[sIdx].days[dIdx] = value;
       attendanceRef.child(`${sIdx}/days/${dIdx}`).set(value);
     }
