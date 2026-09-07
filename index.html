@@ -18,6 +18,7 @@
       --present: #16a34a;
       --absent: #dc2626;
       --excused: #2563eb;
+      --unmarked: #64748b;
     }
     body {
       font-family: system-ui, -apple-system, sans-serif;
@@ -70,6 +71,7 @@
       font-weight: 700;
       color: white;
     }
+    .badge-empty { background: #e2e8f0; color: #475569 !important; }
     .badge-p { background: var(--present); }
     .badge-a { background: var(--absent); }
     .badge-e { background: var(--excused); }
@@ -135,6 +137,7 @@
       outline: none;
       width: 48px;
     }
+    .status-select.sel-empty { background: #f1f5f9; color: var(--unmarked); border-color: #cbd5e1; }
     .status-select.sel-P { background: #dcfce7; color: var(--present); border-color: #86efac; }
     .status-select.sel-A { background: #fee2e2; color: var(--absent); border-color: #fca5a5; }
     .status-select.sel-E { background: #dbeafe; color: var(--excused); border-color: #93c5fd; }
@@ -217,6 +220,7 @@
       </div>
       <div class="actions-bar">
         <div class="legend">
+          <div><span class="badge-empty">-</span> None / Blank</div>
           <div><span class="badge-p">P</span> Present</div>
           <div><span class="badge-a">A</span> Absent</div>
           <div><span class="badge-e">E</span> Completed / Excused</div>
@@ -336,23 +340,24 @@
       records.forEach((s, sIdx) => {
         const tr = document.createElement('tr');
         
-        const eightDays = (s.days || Array(8).fill("P")).slice(0, 8);
+        const eightDays = (s.days || Array(8).fill("")).slice(0, 8);
         
         let present = eightDays.filter(d => d === 'P').length;
         let excused = eightDays.filter(d => d === 'E').length;
         let totalMarked = eightDays.filter(d => d === 'P' || d === 'A' || d === 'E').length;
-        let percentageDisplay = totalMarked === 0 ? '0%' : Math.round(((present + excused) / totalMarked) * 100) + '%';
+        let percentageDisplay = totalMarked === 0 ? '-' : Math.round(((present + excused) / totalMarked) * 100) + '%';
 
         let dayDropdowns = eightDays.map((val, dIdx) => {
-          let currentVal = (val === 'P' || val === 'A' || val === 'E') ? val : 'P';
+          let currentVal = (val === 'P' || val === 'A' || val === 'E') ? val : '';
           return `
             <td style="text-align:center; padding: 2px;">
-              <select class="status-select sel-${currentVal}" onchange="updateDay(${sIdx}, ${dIdx}, this.value)">
+              <select class="status-select sel-${currentVal || 'empty'}" onchange="updateDay(${sIdx}, ${dIdx}, this.value)">
+                <option value="" ${currentVal === '' ? 'selected' : ''}>-</option>
                 <option value="P" ${currentVal === 'P' ? 'selected' : ''}>P</option>
                 <option value="A" ${currentVal === 'A' ? 'selected' : ''}>A</option>
                 <option value="E" ${currentVal === 'E' ? 'selected' : ''}>E</option>
               </select>
-              <span class="print-val">${currentVal}</span>
+              <span class="print-val">${currentVal || '-'}</span>
             </td>
           `;
         }).join('');
@@ -374,7 +379,7 @@
       if (data) {
         records = data;
       } else {
-        records = studentList.map(s => ({ ...s, days: Array(8).fill("P") }));
+        records = studentList.map(s => ({ ...s, days: Array(8).fill("") }));
         attendanceRef.set(records);
       }
       document.getElementById('sync-status').textContent = "● Live synced to cloud";
@@ -383,7 +388,7 @@
     });
 
     function updateDay(sIdx, dIdx, value) {
-      if (!records[sIdx].days) records[sIdx].days = Array(8).fill("P");
+      if (!records[sIdx].days) records[sIdx].days = Array(8).fill("");
       records[sIdx].days[dIdx] = value;
       attendanceRef.child(`${sIdx}/days/${dIdx}`).set(value);
     }
