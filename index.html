@@ -224,10 +224,10 @@
         let dayDropdowns = s.days.map((val, dIdx) => `
           <td style="text-align:center; padding: 2px;">
             <select class="status-select sel-${val || 'empty'}" onchange="updateStatus(${sIdx}, ${dIdx}, this.value)">
-              <option value="" ${val === '' ? 'selected' : ''}>-</option>
+              
               <option value="P" ${val === 'P' ? 'selected' : ''}>P</option>
               <option value="A" ${val === 'A' ? 'selected' : ''}>A</option>
-              <option value="L" ${val === 'L' ? 'selected' : ''}>L</option>
+              
             </select>
           </td>
         `).join('');
