@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Civil Engineering Lab Attendance - 3 Batches</title>
+  <title>Civil Engineering Lab Attendance - Cloud Sync</title>
   <style>
     :root {
       --bg: #f8fafc;
@@ -38,6 +38,22 @@
       border-radius: 8px;
       box-shadow: 0 1px 4px rgba(0,0,0,0.08);
     }
+    .sync-status {
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sync-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #94a3b8;
+    }
+    .sync-online { background: #16a34a; }
+    .sync-saving { background: #d97706; }
+
     .section-card {
       background: var(--card);
       padding: 1.25rem;
@@ -46,9 +62,6 @@
       margin-bottom: 2rem;
     }
     .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       margin-bottom: 1rem;
       padding-bottom: 0.5rem;
       border-bottom: 2px solid #e2e8f0;
@@ -85,8 +98,6 @@
       top: 0;
       z-index: 10;
     }
-
-    /* Only Name column is static */
     .sticky-name {
       position: sticky;
       left: 0;
@@ -99,11 +110,7 @@
       background: #f1f5f9;
       z-index: 30;
     }
-
-    .date-header {
-      text-align: center;
-      padding: 4px;
-    }
+    .date-header { text-align: center; padding: 4px; }
     .date-input {
       font-family: inherit;
       font-size: 0.75rem;
@@ -148,10 +155,16 @@
 <body>
   <div class="container">
     <div class="top-bar">
-      <h2 style="margin: 0; font-size: 1.35rem;">Civil Engineering Lab Attendance Log</h2>
+      <div>
+        <h2 style="margin: 0; font-size: 1.35rem;">Lab Attendance Log (Cloud Connected)</h2>
+        <div class="sync-status">
+          <div id="sync-dot" class="sync-dot"></div>
+          <span id="sync-text">Connecting to Cloud...</span>
+        </div>
+      </div>
       <div style="display: flex; gap: 0.75rem;">
         <button class="btn btn-add" onclick="addColumn()">+ Add Date Column</button>
-        <button class="btn btn-reset" onclick="resetAll()">Clear All Logs</button>
+        <button class="btn btn-reset" onclick="resetAll()">Clear Cloud Data</button>
       </div>
     </div>
 
@@ -171,7 +184,7 @@
     <!-- Batch 2 -->
     <div class="section-card">
       <div class="section-header">
-        <h3 class="section-title">Batch 2 (Students 21 – 40)</h3>
+        <h3 class="section-title">Batch 2 (Students 21 – 41)</h3>
       </div>
       <div class="table-wrapper">
         <table>
@@ -184,7 +197,7 @@
     <!-- Batch 3 -->
     <div class="section-card">
       <div class="section-header">
-        <h3 class="section-title">Batch 3 (Students 41 – 60)</h3>
+        <h3 class="section-title">Batch 3 (Students 42 – 61)</h3>
       </div>
       <div class="table-wrapper">
         <table>
@@ -195,8 +208,26 @@
     </div>
   </div>
 
-  <script>
-    const allStudents = [
+  <!-- Firebase Modular SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+    // --- PASTE YOUR CONFIG KEYS HERE ---
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_MESSAGING_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const docRef = doc(db, "attendance_logs", "civil_lab_v1");
+
+    const defaultStudents = [
       // Batch 1 (1 - 20)
       { sl: 1, usn: "2GO24CV001", name: "ABHINAYA" },
       { sl: 2, usn: "2GO24CV003", name: "AISHWARYA K N" },
@@ -219,7 +250,7 @@
       { sl: 19, usn: "2GO24CV023", name: "NIVEDITA" },
       { sl: 20, usn: "2GO24CV024", name: "NIKIL P" },
 
-      // Batch 2 (21 - 41)
+      // Batch 2 (21 - 41, including SWATHI)
       { sl: 21, usn: "2GO24CV025", name: "PRAVEENKUMAR B" },
       { sl: 22, usn: "2GO24CV026", name: "PRIYANKA Y H" },
       { sl: 23, usn: "2GO24CV027", name: "ROOPA D" },
@@ -265,31 +296,50 @@
       { sl: 61, usn: "2GO25CV427", name: "YASHODA" }
     ];
 
-    function getInitialDates() {
-      return ["", "", "", "", "", ""];
+    let dates = ["", "", "", "", "", ""];
+    let records = defaultStudents.map(s => ({ ...s, days: Array(6).fill("") }));
+
+    function updateIndicator(state, text) {
+      const dot = document.getElementById('sync-dot');
+      const label = document.getElementById('sync-text');
+      dot.className = `sync-dot sync-${state}`;
+      label.textContent = text;
     }
 
-    function createInitialRecords() {
-      return allStudents.map(student => ({
-        ...student,
-        days: Array(6).fill("")
-      }));
-    }
+    onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const cloudData = docSnap.data();
+        dates = cloudData.dates || dates;
+        records = cloudData.records || records;
+      } else {
+        saveToCloud();
+      }
+      render();
+      updateIndicator('online', 'Cloud Synced (Live)');
+    }, (error) => {
+      console.error(error);
+      updateIndicator('unmarked', 'Offline / Connection Error');
+    });
 
-    let dates = JSON.parse(localStorage.getItem('civil_lab_3batches_dates')) || getInitialDates();
-    let records = JSON.parse(localStorage.getItem('civil_lab_3batches_records')) || createInitialRecords();
+    async function saveToCloud() {
+      updateIndicator('saving', 'Saving changes...');
+      try {
+        await setDoc(docRef, { dates, records });
+        updateIndicator('online', 'Cloud Synced (Live)');
+      } catch (err) {
+        console.error(err);
+        updateIndicator('unmarked', 'Error saving to cloud');
+      }
+    }
 
     function render() {
-      localStorage.setItem('civil_lab_3batches_dates', JSON.stringify(dates));
-      localStorage.setItem('civil_lab_3batches_records', JSON.stringify(records));
-
       const batches = [
-        records.slice(0, 20),   // Batch 1
-        records.slice(20, 40),  // Batch 2
-        records.slice(40, 60)   // Batch 3
+        records.slice(0, 20),   // 1 to 20
+        records.slice(20, 41),  // 21 to 41
+        records.slice(41, 61)   // 42 to 61
       ];
 
-      batches.forEach((batchStudents, bIdx) => {
+      batches.forEach((bStudents, bIdx) => {
         const headerRow = document.getElementById(`header-batch-${bIdx}`);
         headerRow.innerHTML = `
           <th>Sl.</th>
@@ -297,10 +347,10 @@
           <th>USN</th>
         `;
 
-        dates.forEach((dVal, colIdx) => {
+        dates.forEach((dVal, cIdx) => {
           headerRow.innerHTML += `
             <th class="date-header">
-              <input type="date" class="date-input" value="${dVal}" onchange="updateDate(${colIdx}, this.value)" />
+              <input type="date" class="date-input" value="${dVal}" onchange="window.updateDate(${cIdx}, this.value)" />
             </th>
           `;
         });
@@ -310,7 +360,7 @@
         const tbody = document.getElementById(`body-batch-${bIdx}`);
         tbody.innerHTML = '';
 
-        batchStudents.forEach((s) => {
+        bStudents.forEach((s) => {
           const globalIdx = s.sl - 1;
           const tr = document.createElement('tr');
           
@@ -321,7 +371,7 @@
 
           let dayDropdowns = s.days.map((val, dIdx) => `
             <td style="text-align:center; padding: 2px;">
-              <select class="status-select sel-${val || 'empty'}" onchange="updateStatus(${globalIdx}, ${dIdx}, this.value)">
+              <select class="status-select sel-${val || 'empty'}" onchange="window.updateStatus(${globalIdx}, ${dIdx}, this.value)">
                 <option value="" ${val === '' ? 'selected' : ''}>-</option>
                 <option value="P" ${val === 'P' ? 'selected' : ''}>P</option>
                 <option value="A" ${val === 'A' ? 'selected' : ''}>A</option>
@@ -342,30 +392,33 @@
       });
     }
 
-    function updateDate(colIdx, value) {
-      dates[colIdx] = value;
+    window.updateDate = (cIdx, val) => {
+      dates[cIdx] = val;
       render();
-    }
+      saveToCloud();
+    };
 
-    function updateStatus(globalStudentIdx, dIdx, value) {
-      records[globalStudentIdx].days[dIdx] = value;
+    window.updateStatus = (gIdx, dIdx, val) => {
+      records[gIdx].days[dIdx] = val;
       render();
-    }
+      saveToCloud();
+    };
 
-    function addColumn() {
+    window.addColumn = () => {
       dates.push("");
-      records.forEach(student => student.days.push(""));
+      records.forEach(r => r.days.push(""));
       render();
-    }
+      saveToCloud();
+    };
 
-    function resetAll() {
-      dates = getInitialDates();
-      records = createInitialRecords();
-      render();
-    }
-
-    render();
+    window.resetAll = () => {
+      if (confirm("Are you sure you want to clear all cloud attendance data?")) {
+        dates = ["", "", "", "", "", ""];
+        records = defaultStudents.map(s => ({ ...s, days: Array(6).fill("") }));
+        render();
+        saveToCloud();
+      }
+    };
   </script>
 </body>
 </html>
-
