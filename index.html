@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lab Attendance Log</title>
+  <title>Civil Engineering Lab Attendance - 3 Batches</title>
   <style>
     :root {
       --bg: #f8fafc;
@@ -25,25 +25,39 @@
     .container {
       max-width: 98%;
       margin: 0 auto;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+      background: var(--card);
+      padding: 1rem 1.25rem;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .section-card {
       background: var(--card);
       padding: 1.25rem;
       border-radius: 8px;
       box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      margin-bottom: 2rem;
     }
-    header {
+    .section-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 1rem;
-      flex-wrap: wrap;
-      gap: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #e2e8f0;
     }
-    .controls {
-      display: flex;
-      gap: 0.75rem;
-      font-size: 0.85rem;
-      align-items: center;
-      flex-wrap: wrap;
+    .section-title {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #1e293b;
     }
     .table-wrapper {
       overflow-x: auto;
@@ -119,11 +133,11 @@
     .btn {
       color: white;
       border: none;
-      padding: 0.4rem 0.8rem;
+      padding: 0.45rem 0.85rem;
       border-radius: 4px;
       cursor: pointer;
       font-size: 0.8rem;
-      font-weight: 500;
+      font-weight: 600;
     }
     .btn-add { background: #0284c7; }
     .btn-add:hover { background: #0369a1; }
@@ -133,46 +147,121 @@
 </head>
 <body>
   <div class="container">
-    <header>
-      <h2 style="margin: 0; font-size: 1.25rem;">Lab Attendance Log (Batch 1 - 20 Students)</h2>
-      <div class="controls">
+    <div class="top-bar">
+      <h2 style="margin: 0; font-size: 1.35rem;">Civil Engineering Lab Attendance Log</h2>
+      <div style="display: flex; gap: 0.75rem;">
         <button class="btn btn-add" onclick="addColumn()">+ Add Date Column</button>
-        <button class="btn btn-reset" onclick="resetAll()">Clear Log</button>
+        <button class="btn btn-reset" onclick="resetAll()">Clear All Logs</button>
       </div>
-    </header>
+    </div>
 
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr id="header-row"></tr>
-        </thead>
-        <tbody id="roster-body"></tbody>
-      </table>
+    <!-- Batch 1 -->
+    <div class="section-card">
+      <div class="section-header">
+        <h3 class="section-title">Batch 1 (Students 1 – 20)</h3>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr id="header-batch-0"></tr></thead>
+          <tbody id="body-batch-0"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Batch 2 -->
+    <div class="section-card">
+      <div class="section-header">
+        <h3 class="section-title">Batch 2 (Students 21 – 40)</h3>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr id="header-batch-1"></tr></thead>
+          <tbody id="body-batch-1"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Batch 3 -->
+    <div class="section-card">
+      <div class="section-header">
+        <h3 class="section-title">Batch 3 (Students 41 – 60)</h3>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr id="header-batch-2"></tr></thead>
+          <tbody id="body-batch-2"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
   <script>
-    const batchStudents = [
-      { usn: "2GO24CV001", name: "ABHINAYA" },
-      { usn: "2GO24CV003", name: "AISHWARYA K N" },
-      { usn: "2GO24CV004", name: "ALFIYABANU K" },
-      { usn: "2GO24CV005", name: "ARUNA" },
-      { usn: "2GO24CV009", name: "CHETHANA K H" },
-      { usn: "2GO24CV010", name: "DAYANAND" },
-      { usn: "2GO24CV011", name: "HARSHA" },
-      { usn: "2GO24CV012", name: "IMAMHUSEN R G" },
-      { usn: "2GO24CV013", name: "KAVITHA" },
-      { usn: "2GO24CV014", name: "KAVYA B" },
-      { usn: "2GO24CV015", name: "KAVYA I" },
-      { usn: "2GO24CV016", name: "KIRAN M M" },
-      { usn: "2GO24CV017", name: "LAXMAVVA" },
-      { usn: "2GO24CV018", name: "LAXMEE Y H" },
-      { usn: "2GO24CV019", name: "MADHUMATHI" },
-      { usn: "2GO24CV020", name: "MADHUSUDAN" },
-      { usn: "2GO24CV021", name: "NAVEEN T Y" },
-      { usn: "2GO24CV022", name: "NIKITA" },
-      { usn: "2GO24CV023", name: "NIVEDITA" },
-      { usn: "2GO24CV024", name: "NIKIL P" }
+    const allStudents = [
+      // Batch 1 (1 - 20)
+      { sl: 1, usn: "2GO24CV001", name: "ABHINAYA" },
+      { sl: 2, usn: "2GO24CV003", name: "AISHWARYA K N" },
+      { sl: 3, usn: "2GO24CV004", name: "ALFIYABANU K" },
+      { sl: 4, usn: "2GO24CV005", name: "ARUNA" },
+      { sl: 5, usn: "2GO24CV009", name: "CHETHANA K H" },
+      { sl: 6, usn: "2GO24CV010", name: "DAYANAND" },
+      { sl: 7, usn: "2GO24CV011", name: "HARSHA" },
+      { sl: 8, usn: "2GO24CV012", name: "IMAMHUSEN R G" },
+      { sl: 9, usn: "2GO24CV013", name: "KAVITHA" },
+      { sl: 10, usn: "2GO24CV014", name: "KAVYA B" },
+      { sl: 11, usn: "2GO24CV015", name: "KAVYA I" },
+      { sl: 12, usn: "2GO24CV016", name: "KIRAN M M" },
+      { sl: 13, usn: "2GO24CV017", name: "LAXMAVVA" },
+      { sl: 14, usn: "2GO24CV018", name: "LAXMEE Y H" },
+      { sl: 15, usn: "2GO24CV019", name: "MADHUMATHI" },
+      { sl: 16, usn: "2GO24CV020", name: "MADHUSUDAN" },
+      { sl: 17, usn: "2GO24CV021", name: "NAVEEN T Y" },
+      { sl: 18, usn: "2GO24CV022", name: "NIKITA" },
+      { sl: 19, usn: "2GO24CV023", name: "NIVEDITA" },
+      { sl: 20, usn: "2GO24CV024", name: "NIKIL P" },
+
+      // Batch 2 (21 - 40)
+      { sl: 21, usn: "2GO24CV025", name: "PRAVEENKUMAR B" },
+      { sl: 22, usn: "2GO24CV026", name: "PRIYANKA Y H" },
+      { sl: 23, usn: "2GO24CV027", name: "ROOPA D" },
+      { sl: 24, usn: "2GO24CV030", name: "SANGEETA K" },
+      { sl: 25, usn: "2GO24CV031", name: "SANIYA K" },
+      { sl: 26, usn: "2GO24CV032", name: "SHALINI S P" },
+      { sl: 27, usn: "2GO24CV033", name: "SHALINI U T" },
+      { sl: 28, usn: "2GO24CV036", name: "SHRUTI G" },
+      { sl: 29, usn: "2GO24CV037", name: "SIDDANAGOUDA" },
+      { sl: 30, usn: "2GO24CV038", name: "SINDHU" },
+      { sl: 31, usn: "2GO24CV039", name: "SNEHA" },
+      { sl: 32, usn: "2GO24CV040", name: "SRUSTI I" },
+      { sl: 33, usn: "2GO24CV041", name: "SUDHA S H" },
+      { sl: 34, usn: "2GO24CV043", name: "YASHWANTH P K" },
+      { sl: 35, usn: "2GO25CV400", name: "AKASH K N" },
+      { sl: 36, usn: "2GO25CV401", name: "AMRUTHA N" },
+      { sl: 37, usn: "2GO25CV402", name: "BHARAT S" },
+      { sl: 38, usn: "2GO25CV404", name: "CHANDRAKANTH D C" },
+      { sl: 39, usn: "2GO25CV405", name: "DHANUSHREE" },
+      { sl: 40, usn: "2GO25CV406", name: "KAVYA M A" },
+
+      // Batch 3 (41 - 60)
+      { sl: 41, usn: "2GO25CV407", name: "KAVYA S K" },
+      { sl: 42, usn: "2GO25CV408", name: "KEERTHI B T" },
+      { sl: 43, usn: "2GO25CV409", name: "KUMAR K" },
+      { sl: 44, usn: "2GO25CV410", name: "NIGARAJ B M" },
+      { sl: 45, usn: "2GO25CV411", name: "NUTANSAGAR" },
+      { sl: 46, usn: "2GO25CV412", name: "PRAVEENKUMAR U D" },
+      { sl: 47, usn: "2GO25CV413", name: "PRIYANKA P" },
+      { sl: 48, usn: "2GO25CV414", name: "PRUTHVI P G" },
+      { sl: 49, usn: "2GO25CV416", name: "RAKSHITHA" },
+      { sl: 50, usn: "2GO25CV417", name: "RAMESH S H" },
+      { sl: 51, usn: "2GO25CV418", name: "SAMPATTA" },
+      { sl: 52, usn: "2GO25CV419", name: "SANNAOBANAYAKA" },
+      { sl: 53, usn: "2GO25CV420", name: "SIDDESH N S" },
+      { sl: 54, usn: "2GO25CV421", name: "SNEHA D" },
+      { sl: 55, usn: "2GO25CV422", name: "SRUJAN K S" },
+      { sl: 56, usn: "2GO25CV423", name: "SUHAS R M" },
+      { sl: 57, usn: "2GO25CV424", name: "UDITH KUMAR G M" },
+      { sl: 58, usn: "2GO25CV425", name: "VARSHA" },
+      { sl: 59, usn: "2GO25CV426", name: "VIKAS L P" },
+      { sl: 60, usn: "2GO25CV427", name: "YASHODA" }
     ];
 
     function getInitialDates() {
@@ -180,65 +269,75 @@
     }
 
     function createInitialRecords() {
-      return batchStudents.map(student => ({
+      return allStudents.map(student => ({
         ...student,
         days: Array(6).fill("")
       }));
     }
 
-    let dates = JSON.parse(localStorage.getItem('lab_attendance_dates')) || getInitialDates();
-    let records = JSON.parse(localStorage.getItem('lab_attendance_records')) || createInitialRecords();
+    let dates = JSON.parse(localStorage.getItem('civil_lab_3batches_dates')) || getInitialDates();
+    let records = JSON.parse(localStorage.getItem('civil_lab_3batches_records')) || createInitialRecords();
 
     function render() {
-      localStorage.setItem('lab_attendance_dates', JSON.stringify(dates));
-      localStorage.setItem('lab_attendance_records', JSON.stringify(records));
+      localStorage.setItem('civil_lab_3batches_dates', JSON.stringify(dates));
+      localStorage.setItem('civil_lab_3batches_records', JSON.stringify(records));
 
-      const headerRow = document.getElementById('header-row');
-      headerRow.innerHTML = `
-        <th>Sl.</th>
-        <th class="sticky-name">Name</th>
-        <th>USN</th>
-      `;
+      const batches = [
+        records.slice(0, 20),   // Batch 1
+        records.slice(20, 40),  // Batch 2
+        records.slice(40, 60)   // Batch 3
+      ];
 
-      dates.forEach((dVal, colIdx) => {
-        headerRow.innerHTML += `
-          <th class="date-header">
-            <input type="date" class="date-input" value="${dVal}" onchange="updateDate(${colIdx}, this.value)" />
-          </th>
+      batches.forEach((batchStudents, bIdx) => {
+        const headerRow = document.getElementById(`header-batch-${bIdx}`);
+        headerRow.innerHTML = `
+          <th>Sl.</th>
+          <th class="sticky-name">Name</th>
+          <th>USN</th>
         `;
-      });
 
-      headerRow.innerHTML += `<th style="text-align:center;">Att. %</th>`;
+        dates.forEach((dVal, colIdx) => {
+          headerRow.innerHTML += `
+            <th class="date-header">
+              <input type="date" class="date-input" value="${dVal}" onchange="updateDate(${colIdx}, this.value)" />
+            </th>
+          `;
+        });
 
-      const tbody = document.getElementById('roster-body');
-      tbody.innerHTML = '';
+        headerRow.innerHTML += `<th style="text-align:center;">Att. %</th>`;
 
-      records.forEach((s, sIdx) => {
-        const tr = document.createElement('tr');
-        
-        let present = s.days.filter(d => d === 'P').length;
-        let late = s.days.filter(d => d === 'L').length;
-        let marked = s.days.filter(d => d !== '').length;
-        let percentageDisplay = marked === 0 ? '-' : Math.round(((present + (late * 0.5)) / marked) * 100) + '%';
+        const tbody = document.getElementById(`body-batch-${bIdx}`);
+        tbody.innerHTML = '';
 
-        let dayDropdowns = s.days.map((val, dIdx) => `
-          <td style="text-align:center; padding: 2px;">
-            <select class="status-select sel-${val || 'empty'}" onchange="updateStatus(${sIdx}, ${dIdx}, this.value)">
-              <option value="" ${val === '' ? 'selected' : ''}>-</option>
-              <option value="P" ${val === 'P' ? 'selected' : ''}>P</option>
-              <option value="A" ${val === 'A' ? 'selected' : ''}>A</option>
-            </select>
-          </td>
-        `).join('');
+        batchStudents.forEach((s) => {
+          const globalIdx = s.sl - 1;
+          const tr = document.createElement('tr');
+          
+          let present = s.days.filter(d => d === 'P').length;
+          let late = s.days.filter(d => d === 'L').length;
+          let marked = s.days.filter(d => d !== '').length;
+          let percentageDisplay = marked === 0 ? '-' : Math.round(((present + (late * 0.5)) / marked) * 100) + '%';
 
-        tr.innerHTML = `
-          <td style="text-align:center;">${sIdx + 1}</td>
-          <td class="sticky-name"><strong>${s.name}</strong></td>
-          <td><code>${s.usn}</code></td>
-          ${dayDropdowns}
-          <td style="text-align:center; font-weight:700;">${percentageDisplay}</td>
-        `;
-        tbody.appendChild(tr);
+          let dayDropdowns = s.days.map((val, dIdx) => `
+            <td style="text-align:center; padding: 2px;">
+              <select class="status-select sel-${val || 'empty'}" onchange="updateStatus(${globalIdx}, ${dIdx}, this.value)">
+                <option value="" ${val === '' ? 'selected' : ''}>-</option>
+                <option value="P" ${val === 'P' ? 'selected' : ''}>P</option>
+                <option value="A" ${val === 'A' ? 'selected' : ''}>A</option>
+                <option value="L" ${val === 'L' ? 'selected' : ''}>L</option>
+              </select>
+            </td>
+          `).join('');
+
+          tr.innerHTML = `
+            <td style="text-align:center;">${s.sl}</td>
+            <td class="sticky-name"><strong>${s.name}</strong></td>
+            <td><code>${s.usn}</code></td>
+            ${dayDropdowns}
+            <td style="text-align:center; font-weight:700;">${percentageDisplay}</td>
+          `;
+          tbody.appendChild(tr);
+        });
       });
     }
 
@@ -247,8 +346,8 @@
       render();
     }
 
-    function updateStatus(sIdx, dIdx, value) {
-      records[sIdx].days[dIdx] = value;
+    function updateStatus(globalStudentIdx, dIdx, value) {
+      records[globalStudentIdx].days[dIdx] = value;
       render();
     }
 
