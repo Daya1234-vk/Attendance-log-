@@ -3,12 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Extensive Survey Attendance Cloud Tracker</title>
-  
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
+  <title>Lab Attendance Log</title>
   <style>
     :root {
       --bg: #f8fafc;
@@ -17,7 +12,7 @@
       --border: #cbd5e1;
       --present: #16a34a;
       --absent: #dc2626;
-      --excused: #2563eb;
+      --late: #d97706;
       --unmarked: #64748b;
     }
     body {
@@ -43,56 +38,13 @@
       flex-wrap: wrap;
       gap: 1rem;
     }
-    .sync-status {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: #0284c7;
-    }
-    .actions-bar {
-      display: flex;
-      gap: 0.75rem;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .legend {
+    .controls {
       display: flex;
       gap: 0.75rem;
       font-size: 0.85rem;
       align-items: center;
       flex-wrap: wrap;
     }
-    .legend span {
-      display: inline-block;
-      width: 22px;
-      height: 22px;
-      line-height: 22px;
-      text-align: center;
-      border-radius: 4px;
-      font-weight: 700;
-      color: white;
-    }
-    .badge-empty { background: #e2e8f0; color: #475569 !important; }
-    .badge-p { background: var(--present); }
-    .badge-a { background: var(--absent); }
-    .badge-e { background: var(--excused); }
-
-    .btn {
-      padding: 0.4rem 0.8rem;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.8rem;
-      font-weight: 600;
-      border: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-    }
-    .print-btn {
-      background: #0f172a;
-      color: white;
-    }
-    .print-btn:hover { background: #334155; }
-
     .table-wrapper {
       overflow-x: auto;
       border: 1px solid var(--border);
@@ -126,6 +78,20 @@
       background: #f1f5f9;
       z-index: 3;
     }
+    .date-header {
+      text-align: center;
+      padding: 4px;
+    }
+    .date-input {
+      font-family: inherit;
+      font-size: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 4px;
+      background: #ffffff;
+      color: var(--text);
+      cursor: pointer;
+    }
     .status-select {
       font-size: 0.8rem;
       font-weight: 700;
@@ -140,113 +106,37 @@
     .status-select.sel-empty { background: #f1f5f9; color: var(--unmarked); border-color: #cbd5e1; }
     .status-select.sel-P { background: #dcfce7; color: var(--present); border-color: #86efac; }
     .status-select.sel-A { background: #fee2e2; color: var(--absent); border-color: #fca5a5; }
-    .status-select.sel-E { background: #dbeafe; color: var(--excused); border-color: #93c5fd; }
+    .status-select.sel-L { background: #fef3c7; color: var(--late); border-color: #fde68a; }
 
-    .print-val { display: none; }
-
-    /* Print & PDF Layout Styling */
-    @media print {
-      body {
-        background: white !important;
-        padding: 0 !important;
-        color: black !important;
-      }
-      .container {
-        max-width: 100% !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-      }
-      header {
-        margin-bottom: 0.75rem !important;
-      }
-      .actions-bar .btn, .sync-status {
-        display: none !important;
-      }
-      .actions-bar {
-        margin-top: 0.25rem !important;
-      }
-      .legend {
-        display: flex !important;
-        font-size: 8pt !important;
-        gap: 0.5rem !important;
-      }
-      .legend span {
-        width: 16px !important;
-        height: 16px !important;
-        line-height: 16px !important;
-        font-size: 7.5pt !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-      .table-wrapper {
-        border: none !important;
-        overflow: visible !important;
-      }
-      table {
-        font-size: 8pt !important;
-        border-collapse: collapse !important;
-        width: 100% !important;
-      }
-      th, td {
-        padding: 3px 5px !important;
-        border: 1px solid #64748b !important;
-      }
-      th {
-        background: #f1f5f9 !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-      .status-select {
-        display: none !important;
-      }
-      .print-val {
-        display: inline-block !important;
-        font-weight: bold;
-        text-align: center;
-        width: 100%;
-      }
-      .sticky-col {
-        position: static !important;
-      }
+    .btn {
+      color: white;
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
     }
+    .btn-add { background: #0284c7; }
+    .btn-add:hover { background: #0369a1; }
+    .btn-reset { background: #ef4444; }
+    .btn-reset:hover { background: #dc2626; }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <div>
-        <h2 style="margin: 0; font-size: 1.25rem;">Extensive Survey Attendance</h2>
-        <span class="sync-status" id="sync-status">Connecting to live database...</span>
-      </div>
-      <div class="actions-bar">
-        <div class="legend">
-          <div><span class="badge-empty">-</span> None / Blank</div>
-          <div><span class="badge-p">P</span> Present</div>
-          <div><span class="badge-a">A</span> Absent</div>
-          <div><span class="badge-e">E</span> Completed / Excused</div>
-        </div>
-        <button class="btn print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>
+      <h2 style="margin: 0; font-size: 1.25rem;">Lab Attendance Log (Batch 1 - 20 Students)</h2>
+      <div class="controls">
+        <button class="btn btn-add" onclick="addColumn()">+ Add Date Column</button>
+        <button class="btn btn-reset" onclick="resetAll()">Clear Log</button>
       </div>
     </header>
 
     <div class="table-wrapper">
       <table>
         <thead>
-          <tr>
-            <th class="sticky-col">Sl.</th>
-            <th>USN</th>
-            <th>Name</th>
-            <th>Team</th>
-            <th style="text-align:center;">D1</th>
-            <th style="text-align:center;">D2</th>
-            <th style="text-align:center;">D3</th>
-            <th style="text-align:center;">D4</th>
-            <th style="text-align:center;">D5</th>
-            <th style="text-align:center;">D6</th>
-            <th style="text-align:center;">D7</th>
-            <th style="text-align:center;">D8</th>
-            <th style="text-align:center;">Att. %</th>
-          </tr>
+          <tr id="header-row"></tr>
         </thead>
         <tbody id="roster-body"></tbody>
       </table>
@@ -254,119 +144,90 @@
   </div>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCd29X3MoHJEnz37dPLCHViSdiee3DAZHc",
-      authDomain: "attendance-app-61b68.firebaseapp.com",
-      databaseURL: "https://attendance-app-61b68-default-rtdb.firebaseio.com",
-      projectId: "attendance-app-61b68",
-      storageBucket: "attendance-app-61b68.firebasestorage.app",
-      messagingSenderId: "969455602479",
-      appId: "1:969455602479:web:21e7180ab7a9699f9c212a"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const attendanceRef = db.ref('attendance_records');
-
-    const studentList = [
-      { id: 1, usn: "2GO24CV001", name: "ABHINAYA", team: "Team A" },
-      { id: 2, usn: "2GO24CV003", name: "AISHWARYA KATHARE N", team: "Team D" },
-      { id: 3, usn: "2GO24CV004", name: "ALFIYABANU KAMBALI", team: "Team D" },
-      { id: 4, usn: "2GO24CV005", name: "ARUNA", team: "Team C" },
-      { id: 5, usn: "2GO24CV009", name: "CHETHANA. K.H", team: "Team D" },
-      { id: 6, usn: "2GO24CV010", name: "DAYANAND", team: "Team A" },
-      { id: 7, usn: "2GO24CV011", name: "HARSHA", team: "Team B" },
-      { id: 8, usn: "2GO24CV012", name: "IMAMHUSEN R G", team: "Team C" },
-      { id: 9, usn: "2GO24CV013", name: "KAVITHA", team: "Team C" },
-      { id: 10, usn: "2GO24CV014", name: "KAVYA B", team: "Team B" },
-      { id: 11, usn: "2GO24CV015", name: "KAVYA ICHCHANGI", team: "Team A" },
-      { id: 12, usn: "2GO24CV016", name: "KIRAN. M. MOTEBENNURU", team: "Team D" },
-      { id: 13, usn: "2GO24CV017", name: "LAXMAVVA", team: "Team C" },
-      { id: 14, usn: "2GO24CV018", name: "LAXMEE Y H", team: "Team B" },
-      { id: 15, usn: "2GO24CV019", name: "MADHUMATHI", team: "Team C" },
-      { id: 16, usn: "2GO24CV020", name: "MADHUSUDAN", team: "Team A" },
-      { id: 17, usn: "2GO24CV021", name: "NAVEEN. T.Υ.", team: "Team D" },
-      { id: 18, usn: "2GO24CV022", name: "NIKITA", team: "Team A" },
-      { id: 19, usn: "2GO24CV023", name: "NIVEDITA", team: "Team A" },
-      { id: 20, usn: "2GO24CV024", name: "P NIKIL", team: "Team B" },
-      { id: 21, usn: "2GO24CV025", name: "PRAVEENKUMAR BOGER", team: "Team B" },
-      { id: 22, usn: "2GO24CV026", name: "PRIYANKA Y H", team: "Team B" },
-      { id: 23, usn: "2GO24CV027", name: "ROOPA D", team: "Team A" },
-      { id: 24, usn: "2GO24CV030", name: "SANGEETA Κ", team: "Team B" },
-      { id: 25, usn: "2GO24CV031", name: "SANIYA KARJAGI", team: "Team D" },
-      { id: 26, usn: "2GO24CV032", name: "SHALINI SP", team: "Team C" },
-      { id: 27, usn: "2GO24CV033", name: "SHALINI UT", team: "Team A" },
-      { id: 28, usn: "2GO24CV036", name: "SHRUTI GANIGAR", team: "Team B" },
-      { id: 29, usn: "2GO24CV037", name: "SIDDANAGOUDA", team: "Team C" },
-      { id: 30, usn: "2GO24CV038", name: "SINDHU", team: "Team C" },
-      { id: 31, usn: "2GO24CV039", name: "SNEHA", team: "Team A" },
-      { id: 32, usn: "2GO24CV040", name: "SRUSTI ITTEKAR", team: "Team D" },
-      { id: 33, usn: "2GO24CV041", name: "SUDHA S H", team: "Team B" },
-      { id: 34, usn: "2GO24CV043", name: "YASHWANTH. P. K", team: "Team D" },
-      { id: 35, usn: "2GO25CV400", name: "AKASH K N", team: "Team C" },
-      { id: 36, usn: "2GO25CV401", name: "AMRUTHA N", team: "Team C" },
-      { id: 37, usn: "2GO25CV402", name: "BHARAT S", team: "Team B" },
-      { id: 38, usn: "2GO25CV404", name: "CHANDRAKANTH D C", team: "Team C" },
-      { id: 39, usn: "2GO25CV405", name: "DHANUSHREE", team: "Team C" },
-      { id: 40, usn: "2GO25CV406", name: "KAVYA MA", team: "Team A" },
-      { id: 41, usn: "2GO25CV407", name: "KAVYA S K", team: "Team B" },
-      { id: 42, usn: "2GO25CV408", name: "KEERTHI. B. T", team: "Team D" },
-      { id: 43, usn: "2GO25CV409", name: "KUMAR K", team: "Team D" },
-      { id: 44, usn: "2GO25CV410", name: "NIGARAJ B M", team: "Team B" },
-      { id: 45, usn: "2GO25CV411", name: "NUTANSAGAR", team: "Team A" },
-      { id: 46, usn: "2GO25CV412", name: "PRAVEENKUMAR U D", team: "Team A" },
-      { id: 47, usn: "2GO25CV413", name: "PRIYANKA P", team: "Team A" },
-      { id: 48, usn: "2GO25CV414", name: "PRUTHVI P G", team: "Team B" },
-      { id: 49, usn: "2GO25CV416", name: "RAKSHITHA", team: "Team C" },
-      { id: 50, usn: "2GO25CV417", name: "RAMESH. S. H", team: "Team D" },
-      { id: 51, usn: "2GO25CV418", name: "SAMPATTA", team: "Team A" },
-      { id: 52, usn: "2GO25CV419", name: "SANNAOBANAYAKA", team: "Team A" },
-      { id: 53, usn: "2GO25CV420", name: "SIDDESH N S", team: "Team C" },
-      { id: 54, usn: "2GO25CV421", name: "SNEHA D", team: "Team A" },
-      { id: 55, usn: "2GO25CV422", name: "SRUJAN K S", team: "Team C" },
-      { id: 56, usn: "2GO25CV423", name: "SUHAS. R. M", team: "Team D" },
-      { id: 57, usn: "2GO25CV424", name: "UDITH KUMAR. G. M", team: "Team D" },
-      { id: 58, usn: "2GO25CV425", name: "VARSHA", team: "Team C" },
-      { id: 59, usn: "2GO25CV426", name: "VIKAS L P", team: "Team B" },
-      { id: 60, usn: "2GO25CV427", name: "YASHODA", team: "Team D" }
+    const batchStudents = [
+      { usn: "2GO24CV001", name: "ABHINAYA" },
+      { usn: "2GO24CV003", name: "AISHWARYA K N" },
+      { usn: "2GO24CV004", name: "ALFIYABANU K" },
+      { usn: "2GO24CV005", name: "ARUNA" },
+      { usn: "2GO24CV009", name: "CHETHANA K H" },
+      { usn: "2GO24CV010", name: "DAYANAND" },
+      { usn: "2GO24CV011", name: "HARSHA" },
+      { usn: "2GO24CV012", name: "IMAMHUSEN R G" },
+      { usn: "2GO24CV013", name: "KAVITHA" },
+      { usn: "2GO24CV014", name: "KAVYA B" },
+      { usn: "2GO24CV015", name: "KAVYA I" },
+      { usn: "2GO24CV016", name: "KIRAN M M" },
+      { usn: "2GO24CV017", name: "LAXMAVVA" },
+      { usn: "2GO24CV018", name: "LAXMEE Y H" },
+      { usn: "2GO24CV019", name: "MADHUMATHI" },
+      { usn: "2GO24CV020", name: "MADHUSUDAN" },
+      { usn: "2GO24CV021", name: "NAVEEN T Y" },
+      { usn: "2GO24CV022", name: "NIKITA" },
+      { usn: "2GO24CV023", name: "NIVEDITA" },
+      { usn: "2GO24CV024", name: "NIKIL P" }
     ];
 
-    let records = [];
+    function getInitialDates() {
+      return ["", "", "", "", "", ""];
+    }
 
-    function renderTable() {
+    function createInitialRecords() {
+      return batchStudents.map(student => ({
+        ...student,
+        days: Array(6).fill("")
+      }));
+    }
+
+    let dates = JSON.parse(localStorage.getItem('lab_attendance_dates')) || getInitialDates();
+    let records = JSON.parse(localStorage.getItem('lab_attendance_records')) || createInitialRecords();
+
+    function render() {
+      localStorage.setItem('lab_attendance_dates', JSON.stringify(dates));
+      localStorage.setItem('lab_attendance_records', JSON.stringify(records));
+
+      const headerRow = document.getElementById('header-row');
+      headerRow.innerHTML = `
+        <th class="sticky-col">Sl.</th>
+        <th>USN</th>
+        <th>Name</th>
+      `;
+
+      dates.forEach((dVal, colIdx) => {
+        headerRow.innerHTML += `
+          <th class="date-header">
+            <input type="date" class="date-input" value="${dVal}" onchange="updateDate(${colIdx}, this.value)" />
+          </th>
+        `;
+      });
+
+      headerRow.innerHTML += `<th style="text-align:center;">Att. %</th>`;
+
       const tbody = document.getElementById('roster-body');
       tbody.innerHTML = '';
 
       records.forEach((s, sIdx) => {
         const tr = document.createElement('tr');
         
-        const eightDays = (s.days || Array(8).fill("")).slice(0, 8);
-        
-        let present = eightDays.filter(d => d === 'P').length;
-        let excused = eightDays.filter(d => d === 'E').length;
-        let totalMarked = eightDays.filter(d => d === 'P' || d === 'A' || d === 'E').length;
-        let percentageDisplay = totalMarked === 0 ? '-' : Math.round(((present + excused) / totalMarked) * 100) + '%';
+        let present = s.days.filter(d => d === 'P').length;
+        let late = s.days.filter(d => d === 'L').length;
+        let marked = s.days.filter(d => d !== '').length;
+        let percentageDisplay = marked === 0 ? '-' : Math.round(((present + (late * 0.5)) / marked) * 100) + '%';
 
-        let dayDropdowns = eightDays.map((val, dIdx) => {
-          let currentVal = (val === 'P' || val === 'A' || val === 'E') ? val : '';
-          return `
-            <td style="text-align:center; padding: 2px;">
-              <select class="status-select sel-${currentVal || 'empty'}" onchange="updateDay(${sIdx}, ${dIdx}, this.value)">
-                <option value="" ${currentVal === '' ? 'selected' : ''}>-</option>
-                <option value="P" ${currentVal === 'P' ? 'selected' : ''}>P</option>
-                <option value="A" ${currentVal === 'A' ? 'selected' : ''}>A</option>
-                <option value="E" ${currentVal === 'E' ? 'selected' : ''}>E</option>
-              </select>
-              <span class="print-val">${currentVal || '-'}</span>
-            </td>
-          `;
-        }).join('');
+        let dayDropdowns = s.days.map((val, dIdx) => `
+          <td style="text-align:center; padding: 2px;">
+            <select class="status-select sel-${val || 'empty'}" onchange="updateStatus(${sIdx}, ${dIdx}, this.value)">
+              <option value="" ${val === '' ? 'selected' : ''}>-</option>
+              <option value="P" ${val === 'P' ? 'selected' : ''}>P</option>
+              <option value="A" ${val === 'A' ? 'selected' : ''}>A</option>
+              <option value="L" ${val === 'L' ? 'selected' : ''}>L</option>
+            </select>
+          </td>
+        `).join('');
 
         tr.innerHTML = `
           <td class="sticky-col">${sIdx + 1}</td>
           <td><code>${s.usn}</code></td>
           <td><strong>${s.name}</strong></td>
-          <td>${s.team}</td>
           ${dayDropdowns}
           <td style="text-align:center; font-weight:700;">${percentageDisplay}</td>
         `;
@@ -374,24 +235,29 @@
       });
     }
 
-    attendanceRef.on('value', (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        records = data;
-      } else {
-        records = studentList.map(s => ({ ...s, days: Array(8).fill("") }));
-        attendanceRef.set(records);
-      }
-      document.getElementById('sync-status').textContent = "● Live synced to cloud";
-      document.getElementById('sync-status').style.color = "#16a34a";
-      renderTable();
-    });
-
-    function updateDay(sIdx, dIdx, value) {
-      if (!records[sIdx].days) records[sIdx].days = Array(8).fill("");
-      records[sIdx].days[dIdx] = value;
-      attendanceRef.child(`${sIdx}/days/${dIdx}`).set(value);
+    function updateDate(colIdx, value) {
+      dates[colIdx] = value;
+      render();
     }
+
+    function updateStatus(sIdx, dIdx, value) {
+      records[sIdx].days[dIdx] = value;
+      render();
+    }
+
+    function addColumn() {
+      dates.push("");
+      records.forEach(student => student.days.push(""));
+      render();
+    }
+
+    function resetAll() {
+      dates = getInitialDates();
+      records = createInitialRecords();
+      render();
+    }
+
+    render();
   </script>
 </body>
 </html>
