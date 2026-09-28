@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Civil Engineering Lab Attendance - Cloud Sync</title>
+  <title>Civil Engineering Lab Attendance - Independent Batches</title>
   <style>
     :root {
       --bg: #f8fafc;
@@ -12,7 +12,6 @@
       --border: #cbd5e1;
       --present: #16a34a;
       --absent: #dc2626;
-      --late: #d97706;
       --unmarked: #64748b;
     }
     body {
@@ -62,9 +61,14 @@
       margin-bottom: 2rem;
     }
     .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 1rem;
       padding-bottom: 0.5rem;
       border-bottom: 2px solid #e2e8f0;
+      flex-wrap: wrap;
+      gap: 0.5rem;
     }
     .section-title {
       margin: 0;
@@ -135,7 +139,6 @@
     .status-select.sel-empty { background: #f1f5f9; color: var(--unmarked); border-color: #cbd5e1; }
     .status-select.sel-P { background: #dcfce7; color: var(--present); border-color: #86efac; }
     .status-select.sel-A { background: #fee2e2; color: var(--absent); border-color: #fca5a5; }
-    .status-select.sel-L { background: #fef3c7; color: var(--late); border-color: #fde68a; }
 
     .btn {
       color: white;
@@ -163,7 +166,6 @@
         </div>
       </div>
       <div style="display: flex; gap: 0.75rem;">
-        <button class="btn btn-add" onclick="addColumn()">+ Add Date Column</button>
         <button class="btn btn-reset" onclick="resetAll()">Clear Cloud Data</button>
       </div>
     </div>
@@ -172,6 +174,7 @@
     <div class="section-card">
       <div class="section-header">
         <h3 class="section-title">Batch 1 (Students 1 – 20)</h3>
+        <button class="btn btn-add" onclick="addBatchColumn(0)">+ Add Date Column (Batch 1)</button>
       </div>
       <div class="table-wrapper">
         <table>
@@ -185,6 +188,7 @@
     <div class="section-card">
       <div class="section-header">
         <h3 class="section-title">Batch 2 (Students 21 – 41)</h3>
+        <button class="btn btn-add" onclick="addBatchColumn(1)">+ Add Date Column (Batch 2)</button>
       </div>
       <div class="table-wrapper">
         <table>
@@ -198,6 +202,7 @@
     <div class="section-card">
       <div class="section-header">
         <h3 class="section-title">Batch 3 (Students 42 – 61)</h3>
+        <button class="btn btn-add" onclick="addBatchColumn(2)">+ Add Date Column (Batch 3)</button>
       </div>
       <div class="table-wrapper">
         <table>
@@ -225,10 +230,9 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const docRef = doc(db, "attendance_logs", "civil_lab_v1");
+    const docRef = doc(db, "attendance_logs", "civil_lab_v2");
 
-    const defaultStudents = [
-      // Batch 1 (1 - 20)
+    const batch1Students = [
       { sl: 1, usn: "2GO24CV001", name: "ABHINAYA" },
       { sl: 2, usn: "2GO24CV003", name: "AISHWARYA K N" },
       { sl: 3, usn: "2GO24CV004", name: "ALFIYABANU K" },
@@ -248,9 +252,10 @@
       { sl: 17, usn: "2GO24CV021", name: "NAVEEN T Y" },
       { sl: 18, usn: "2GO24CV022", name: "NIKITA" },
       { sl: 19, usn: "2GO24CV023", name: "NIVEDITA" },
-      { sl: 20, usn: "2GO24CV024", name: "NIKIL P" },
+      { sl: 20, usn: "2GO24CV024", name: "NIKIL P" }
+    ];
 
-      // Batch 2 (21 - 41, including SWATHI)
+    const batch2Students = [
       { sl: 21, usn: "2GO24CV025", name: "PRAVEENKUMAR B" },
       { sl: 22, usn: "2GO24CV026", name: "PRIYANKA Y H" },
       { sl: 23, usn: "2GO24CV027", name: "ROOPA D" },
@@ -271,9 +276,10 @@
       { sl: 38, usn: "2GO25CV402", name: "BHARAT S" },
       { sl: 39, usn: "2GO25CV404", name: "CHANDRAKANTH D C" },
       { sl: 40, usn: "2GO25CV405", name: "DHANUSHREE" },
-      { sl: 41, usn: "2GO25CV406", name: "KAVYA M A" },
+      { sl: 41, usn: "2GO25CV406", name: "KAVYA M A" }
+    ];
 
-      // Batch 3 (42 - 61)
+    const batch3Students = [
       { sl: 42, usn: "2GO25CV407", name: "KAVYA S K" },
       { sl: 43, usn: "2GO25CV408", name: "KEERTHI B T" },
       { sl: 44, usn: "2GO25CV409", name: "KUMAR K" },
@@ -296,8 +302,18 @@
       { sl: 61, usn: "2GO25CV427", name: "YASHODA" }
     ];
 
-    let dates = ["", "", "", "", "", ""];
-    let records = defaultStudents.map(s => ({ ...s, days: Array(6).fill("") }));
+    function createDefaultBatch(studentList) {
+      return {
+        dates: ["", "", "", "", "", ""],
+        records: studentList.map(s => ({ ...s, days: Array(6).fill("") }))
+      };
+    }
+
+    let batchData = [
+      createDefaultBatch(batch1Students),
+      createDefaultBatch(batch2Students),
+      createDefaultBatch(batch3Students)
+    ];
 
     function updateIndicator(state, text) {
       const dot = document.getElementById('sync-dot');
@@ -309,8 +325,9 @@
     onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         const cloudData = docSnap.data();
-        dates = cloudData.dates || dates;
-        records = cloudData.records || records;
+        if (cloudData && cloudData.batchData) {
+          batchData = cloudData.batchData;
+        }
       } else {
         saveToCloud();
       }
@@ -324,7 +341,7 @@
     async function saveToCloud() {
       updateIndicator('saving', 'Saving changes...');
       try {
-        await setDoc(docRef, { dates, records });
+        await setDoc(docRef, { batchData });
         updateIndicator('online', 'Cloud Synced (Live)');
       } catch (err) {
         console.error(err);
@@ -333,13 +350,7 @@
     }
 
     function render() {
-      const batches = [
-        records.slice(0, 20),   // 1 to 20
-        records.slice(20, 41),  // 21 to 41
-        records.slice(41, 61)   // 42 to 61
-      ];
-
-      batches.forEach((bStudents, bIdx) => {
+      batchData.forEach((bObj, bIdx) => {
         const headerRow = document.getElementById(`header-batch-${bIdx}`);
         headerRow.innerHTML = `
           <th>Sl.</th>
@@ -347,10 +358,10 @@
           <th>USN</th>
         `;
 
-        dates.forEach((dVal, cIdx) => {
+        bObj.dates.forEach((dVal, cIdx) => {
           headerRow.innerHTML += `
             <th class="date-header">
-              <input type="date" class="date-input" value="${dVal}" onchange="window.updateDate(${cIdx}, this.value)" />
+              <input type="date" class="date-input" value="${dVal}" onchange="window.updateBatchDate(${bIdx}, ${cIdx}, this.value)" />
             </th>
           `;
         });
@@ -360,22 +371,19 @@
         const tbody = document.getElementById(`body-batch-${bIdx}`);
         tbody.innerHTML = '';
 
-        bStudents.forEach((s) => {
-          const globalIdx = s.sl - 1;
+        bObj.records.forEach((s, sIdx) => {
           const tr = document.createElement('tr');
           
           let present = s.days.filter(d => d === 'P').length;
-          let late = s.days.filter(d => d === 'L').length;
-          let marked = s.days.filter(d => d !== '').length;
-          let percentageDisplay = marked === 0 ? '-' : Math.round(((present + (late * 0.5)) / marked) * 100) + '%';
+          let marked = s.days.filter(d => d === 'P' || d === 'A').length;
+          let percentageDisplay = marked === 0 ? '-' : Math.round((present / marked) * 100) + '%';
 
           let dayDropdowns = s.days.map((val, dIdx) => `
             <td style="text-align:center; padding: 2px;">
-              <select class="status-select sel-${val || 'empty'}" onchange="window.updateStatus(${globalIdx}, ${dIdx}, this.value)">
+              <select class="status-select sel-${val || 'empty'}" onchange="window.updateBatchStatus(${bIdx}, ${sIdx}, ${dIdx}, this.value)">
                 <option value="" ${val === '' ? 'selected' : ''}>-</option>
                 <option value="P" ${val === 'P' ? 'selected' : ''}>P</option>
                 <option value="A" ${val === 'A' ? 'selected' : ''}>A</option>
-                <option value="L" ${val === 'L' ? 'selected' : ''}>L</option>
               </select>
             </td>
           `).join('');
@@ -392,29 +400,32 @@
       });
     }
 
-    window.updateDate = (cIdx, val) => {
-      dates[cIdx] = val;
+    window.updateBatchDate = (bIdx, cIdx, val) => {
+      batchData[bIdx].dates[cIdx] = val;
       render();
       saveToCloud();
     };
 
-    window.updateStatus = (gIdx, dIdx, val) => {
-      records[gIdx].days[dIdx] = val;
+    window.updateBatchStatus = (bIdx, sIdx, dIdx, val) => {
+      batchData[bIdx].records[sIdx].days[dIdx] = val;
       render();
       saveToCloud();
     };
 
-    window.addColumn = () => {
-      dates.push("");
-      records.forEach(r => r.days.push(""));
+    window.addBatchColumn = (bIdx) => {
+      batchData[bIdx].dates.push("");
+      batchData[bIdx].records.forEach(r => r.days.push(""));
       render();
       saveToCloud();
     };
 
     window.resetAll = () => {
-      if (confirm("Are you sure you want to clear all cloud attendance data?")) {
-        dates = ["", "", "", "", "", ""];
-        records = defaultStudents.map(s => ({ ...s, days: Array(6).fill("") }));
+      if (confirm("Are you sure you want to clear all cloud attendance data across all batches?")) {
+        batchData = [
+          createDefaultBatch(batch1Students),
+          createDefaultBatch(batch2Students),
+          createDefaultBatch(batch3Students)
+        ];
         render();
         saveToCloud();
       }
